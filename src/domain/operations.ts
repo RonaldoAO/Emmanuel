@@ -58,6 +58,24 @@ export function setHoras(state: AppState, horas: number): AppState {
   return { ...state, horas };
 }
 
+/** Removes a single cuadra and all of its observations. The remaining cuadras keep their own ids/data. */
+export function removeCuadra(state: AppState, cuadraId: string): AppState {
+  const cuadra = state.cuadras.find((c) => c.id === cuadraId);
+  if (!cuadra) return state;
+  const removedKeys = Object.keys(state.observations).filter((key) => key.split('|')[0] === cuadraId);
+  return {
+    ...state,
+    cuadras: reindexOrders(state.cuadras.filter((c) => c.id !== cuadraId)),
+    observations: omitKeys(state.observations, removedKeys),
+  };
+}
+
+/** Removes every cuadra and all observations, keeping horas as-is. */
+export function clearAllCuadras(state: AppState): AppState {
+  if (state.cuadras.length === 0) return state;
+  return { ...state, cuadras: [], observations: {} };
+}
+
 function updateCuadra(state: AppState, cuadraId: string, updater: (cuadra: Cuadra) => Cuadra): AppState {
   const index = state.cuadras.findIndex((c) => c.id === cuadraId);
   if (index === -1) return state;

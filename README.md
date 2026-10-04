@@ -38,7 +38,10 @@ npm run lint       # oxlint
    nombre automático). Usa **+ Agregar cajón** (debajo de la tabla) para
    añadir filas y **+ Recorrido** (arriba a la derecha) para añadir
    columnas. Click derecho sobre el número de un cajón o sobre el
-   encabezado de un recorrido abre un menú para eliminarlo.
+   encabezado de un recorrido abre un menú para eliminarlo. **Eliminar
+   cuadra** (junto al nombre) borra esa tabla completa, y **Eliminar todas
+   las cuadras** (arriba) borra todas de una vez; ambas piden confirmación
+   porque no se pueden deshacer.
 3. En cada celda escribe el identificador del vehículo (letras y/o números,
    como una placa; vacío = cajón vacío). El color se calcula solo: rojo si
    está vacía, verde si ocupa el cajón, y amarillo automáticamente cuando el
@@ -57,18 +60,23 @@ npm run lint       # oxlint
    placa (o `0` para vacío). Crea una cuadra nueva al final de la lista por
    cada tabla que encuentre en el archivo (en cualquier hoja), usando el
    valor junto a "Nivel:" como nombre si lo encuentra. No modifica las
-   cuadras existentes. Nota: si el archivo ya trae sus propios cálculos de
-   demanda/rotación, pueden no coincidir exactamente con los de esta app si
-   esos cálculos cuentan "cajones ocupados" en vez de "vehículos distintos"
-   (ver limitación más abajo).
+   cuadras existentes.
 
 ## Fórmulas
 
 Para cada cuadra: `C` = cajones (oferta), `R` = recorridos, `T` = horas,
-`N` = vehículos distintos observados (demanda), `O` = celdas con vehículo,
-`V` = celdas vacías.
+`O` = celdas con vehículo, `V` = celdas vacías.
 
-- Demanda = `N`
+- Demanda (`N`) = `O` menos las "continuaciones": una celda es una
+  continuación cuando tiene el mismo vehículo que el recorrido
+  *inmediatamente anterior*, **en el mismo cajón**. Un mismo vehículo que
+  permanece en su cajón cuenta una sola vez; si cambia de cajón, o si el
+  cajón cambia de vehículo, cada ocupación cuenta por separado — no se
+  deduplica entre cajones distintos, porque dos cajones ocupados a la vez
+  son dos espacios usados, aunque compartan placa por coincidencia (pasa
+  con códigos cortos en estudios reales). Verificado exacto contra el
+  ejercicio original (12/9/15/7) y contra un estudio real de estacionamiento
+  (ver `src/import/importExcel.test.ts`).
 - Cajones vacíos promedio = `V / R`
 - Ir = `N / (C × T)`
 - De = `1 / Ir` (horas); en minutos, × 60
@@ -88,19 +96,3 @@ src/
   components/  CuadraTable, ContextMenu, Legend.
   App.tsx      Página única: barra superior + lista de tablas por cuadra.
 ```
-
-## Limitación conocida: definición de "Demanda" al importar
-
-Esta app calcula **Demanda = número de vehículos distintos observados** (un
-mismo vehículo que permanece varios recorridos cuenta una sola vez). Esto
-fue verificado exactamente contra el ejercicio original que dio origen a la
-app. Al probar la importación contra un archivo real de estudio de
-estacionamientos, encontré que su "Demanda" ya calculada en el archivo mide
-otra cosa: **cajones ocupados en al menos uno de los recorridos del
-periodo** (sin distinguir si es el mismo vehículo o uno distinto). Son dos
-métricas distintas, y con placas abreviadas que se repiten entre cajones
-(coincidencias reales, no error de captura) los dos números pueden diferir.
-Al importar, Oferta, Cajones vacíos promedio y Utilización sí coinciden
-exactamente con lo que ya traiga el archivo (son metricas no ambiguas); solo
-Demanda, Índice de rotación y Duración pueden diferir de lo que el archivo
-original reporte.

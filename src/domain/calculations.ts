@@ -62,7 +62,7 @@ export interface CuadraResult {
   R: number; // número de recorridos
   T: number; // duración del estudio, en horas
   oferta: number;
-  demanda: number; // N: vehículos distintos observados
+  demanda: number; // N: ocupaciones observadas (ver nota debajo)
   vaciosPromedio: number;
   rotacion: number;
   /** null cuando no es calculable (no se observaron vehículos) */
@@ -71,28 +71,45 @@ export interface CuadraResult {
   utilizacion: number;
 }
 
+/**
+ * N (demanda) = observaciones ocupadas, contando una sola vez cuando el
+ * mismo vehículo permanece en el MISMO cajón del recorrido inmediatamente
+ * anterior (una "estadía" continua), pero contando por separado si:
+ * - es un vehículo distinto en ese cajón (cambio/turnover), o
+ * - el mismo vehículo reaparece en un cajón DISTINTO (no se deduplica entre
+ *   cajones — dos cajones ocupados por la misma placa al mismo tiempo son
+ *   dos ocupaciones reales, no una).
+ *
+ * Es decir: N = O − (número de celdas cuyo valor es igual al del recorrido
+ * anterior en el mismo cajón). Equivale a contar cada "racha" de verdes
+ * consecutivos como una sola ocupación. Verificado exacto contra el
+ * ejercicio original (demanda 12/9/15/7) y contra un estudio real con
+ * colisiones de placas entre cajones distintos (ver import/importExcel.test.ts).
+ */
 export function calculateCuadraResult(cuadra: Cuadra, horas: number, observations: ObservationsMap): CuadraResult {
   const C = cuadra.cajones.length;
   const R = cuadra.recorridos.length;
   const T = horas;
 
-  const distinctVehicles = new Set<string>();
   let occupied = 0; // O: observaciones ocupadas (celda con vehículo)
   let empty = 0; // V: observaciones vacías
+  let continuations = 0; // mismo vehículo, mismo cajón, recorrido inmediatamente anterior
 
   for (const cajon of cuadra.cajones) {
+    let previousValue = '';
     for (const rec of cuadra.recorridos) {
       const value = getCellValue(observations, getCellKey(cuadra.id, cajon.id, rec.id));
       if (value !== '') {
         occupied += 1;
-        distinctVehicles.add(value);
+        if (value === previousValue) continuations += 1;
       } else {
         empty += 1;
       }
+      previousValue = value;
     }
   }
 
-  const demanda = distinctVehicles.size;
+  const demanda = occupied - continuations;
   const vaciosPromedio = R > 0 ? empty / R : 0;
   const rotacion = C > 0 && T > 0 ? demanda / (C * T) : 0;
   const duracionHoras = rotacion > 0 ? 1 / rotacion : null;

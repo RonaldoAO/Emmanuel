@@ -170,6 +170,16 @@ p {
   font-size: 0.82rem;
 }
 
+.btn-danger {
+  background: var(--surface);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.btn-danger:hover {
+  background: #fdecea;
+}
+
 .save-status {
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -233,6 +243,14 @@ p {
 
 .cuadra-card-capture {
   background: var(--surface);
+}
+
+.cuadra-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .cuadra-title {

@@ -4,8 +4,10 @@ import {
   addCajon,
   addRecorrido,
   appendCuadraFromGrid,
+  clearAllCuadras,
   createInitialState,
   removeCajon,
+  removeCuadra,
   removeRecorrido,
   renameCuadra,
   setCellValue,
@@ -178,5 +180,50 @@ describe('appendCuadraFromGrid', () => {
         getCellKey(existingId, state.cuadras[0].cajones[0].id, state.cuadras[0].recorridos[0].id)
       ],
     ).toBe('KEEP1');
+  });
+});
+
+describe('removeCuadra', () => {
+  it('removes only the targeted cuadra and its observations, keeping the rest', () => {
+    let state = setCuadraCount(createInitialState(), 2);
+    const [c1, c2] = state.cuadras;
+    state = addCajon(state, c1.id);
+    state = addRecorrido(state, c1.id);
+    state = addCajon(state, c2.id);
+    state = addRecorrido(state, c2.id);
+    state = setCellValue(state, c1.id, state.cuadras[0].cajones[0].id, state.cuadras[0].recorridos[0].id, 'A1');
+    state = setCellValue(state, c2.id, state.cuadras[1].cajones[0].id, state.cuadras[1].recorridos[0].id, 'B1');
+
+    state = removeCuadra(state, c1.id);
+
+    expect(state.cuadras).toHaveLength(1);
+    expect(state.cuadras[0].id).toBe(c2.id);
+    expect(Object.keys(state.observations)).toHaveLength(1);
+    expect(
+      state.observations[getCellKey(c2.id, state.cuadras[0].cajones[0].id, state.cuadras[0].recorridos[0].id)],
+    ).toBe('B1');
+  });
+
+  it('is a no-op for an unknown id', () => {
+    const state = setCuadraCount(createInitialState(), 1);
+    const result = removeCuadra(state, 'does-not-exist');
+    expect(result).toBe(state);
+  });
+});
+
+describe('clearAllCuadras', () => {
+  it('removes every cuadra and every observation, keeping horas', () => {
+    let state = setCuadraCount(createInitialState(), 2);
+    state = { ...state, horas: 3 };
+    const [c1] = state.cuadras;
+    state = addCajon(state, c1.id);
+    state = addRecorrido(state, c1.id);
+    state = setCellValue(state, c1.id, state.cuadras[0].cajones[0].id, state.cuadras[0].recorridos[0].id, 'A1');
+
+    state = clearAllCuadras(state);
+
+    expect(state.cuadras).toHaveLength(0);
+    expect(Object.keys(state.observations)).toHaveLength(0);
+    expect(state.horas).toBe(3);
   });
 });

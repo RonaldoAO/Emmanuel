@@ -57,7 +57,7 @@ export function buildCuadraSheetData(
 
   rows.push([{ value: '' }]);
   rows.push([{ value: 'Oferta (cajones)', fontWeight: 'bold' }, { value: result.oferta }]);
-  rows.push([{ value: 'Demanda (vehículos distintos)', fontWeight: 'bold' }, { value: result.demanda }]);
+  rows.push([{ value: 'Demanda', fontWeight: 'bold' }, { value: result.demanda }]);
   rows.push([{ value: 'Cajones vacíos promedio', fontWeight: 'bold' }, { value: formatNumberEs(result.vaciosPromedio) }]);
   rows.push([{ value: 'Índice de rotación (veh/cajón/h)', fontWeight: 'bold' }, { value: formatNumberEs(result.rotacion, 6) }]);
   rows.push([

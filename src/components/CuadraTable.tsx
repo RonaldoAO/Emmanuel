@@ -18,6 +18,7 @@ interface CuadraTableProps {
   onRemoveRecorrido: (cuadraId: string, recorridoId: string) => void;
   onSetCellValue: (cuadraId: string, cajonId: string, recorridoId: string, value: string) => void;
   onRenameCuadra: (cuadraId: string, name: string | null) => void;
+  onRemoveCuadra: (cuadraId: string) => void;
 }
 
 export function CuadraTable({
@@ -31,6 +32,7 @@ export function CuadraTable({
   onRemoveRecorrido,
   onSetCellValue,
   onRenameCuadra,
+  onRemoveCuadra,
 }: CuadraTableProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
@@ -51,6 +53,17 @@ export function CuadraTable({
   function commitName() {
     setIsEditingName(false);
     onRenameCuadra(cuadra.id, nameDraft);
+  }
+
+  function handleDeleteCuadra() {
+    const displayName = cuadra.name ?? defaultName;
+    const hasData = Object.keys(observations).some((key) => key.startsWith(`${cuadra.id}|`));
+    const message = hasData
+      ? `¿Eliminar "${displayName}" por completo? Se perderán todos sus cajones, recorridos y datos capturados. Esta acción no se puede deshacer.`
+      : `¿Eliminar "${displayName}"?`;
+    if (window.confirm(message)) {
+      onRemoveCuadra(cuadra.id);
+    }
   }
 
   function clearSelection() {
@@ -109,34 +122,39 @@ export function CuadraTable({
   return (
     <section className="cuadra-card">
       <div ref={tableWrapRef} className="cuadra-card-capture">
-        <h2 className="cuadra-title">
-          {isEditingName ? (
-            <input
-              type="text"
-              className="cuadra-title-input"
-              value={nameDraft}
-              autoFocus
-              onChange={(e) => setNameDraft(e.target.value)}
-              onBlur={commitName}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') e.currentTarget.blur();
-                if (e.key === 'Escape') {
-                  setIsEditingName(false);
-                }
-              }}
-              aria-label="Nombre de la cuadra"
-            />
-          ) : (
-            <button
-              type="button"
-              className="cuadra-title-btn"
-              onClick={startEditingName}
-              title="Click para renombrar"
-            >
-              {cuadra.name ?? defaultName}
-            </button>
-          )}
-        </h2>
+        <div className="cuadra-card-header">
+          <h2 className="cuadra-title">
+            {isEditingName ? (
+              <input
+                type="text"
+                className="cuadra-title-input"
+                value={nameDraft}
+                autoFocus
+                onChange={(e) => setNameDraft(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur();
+                  if (e.key === 'Escape') {
+                    setIsEditingName(false);
+                  }
+                }}
+                aria-label="Nombre de la cuadra"
+              />
+            ) : (
+              <button
+                type="button"
+                className="cuadra-title-btn"
+                onClick={startEditingName}
+                title="Click para renombrar"
+              >
+                {cuadra.name ?? defaultName}
+              </button>
+            )}
+          </h2>
+          <button type="button" className="btn btn-sm btn-danger" onClick={handleDeleteCuadra}>
+            Eliminar cuadra
+          </button>
+        </div>
 
         <div className="table-wrap">
           <table className="cuadra-table">

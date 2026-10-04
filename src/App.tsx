@@ -6,8 +6,10 @@ import {
   addCajon,
   addRecorrido,
   appendCuadraFromGrid,
+  clearAllCuadras,
   createInitialState,
   removeCajon,
+  removeCuadra,
   removeRecorrido,
   renameCuadra,
   setCellValue,
@@ -86,6 +88,17 @@ function App() {
 
   function handleImportClick() {
     fileInputRef.current?.click();
+  }
+
+  function handleClearAll() {
+    if (state.cuadras.length === 0) return;
+    const message =
+      state.cuadras.length === 1
+        ? '¿Eliminar la única cuadra del sitio? Se perderán todos sus datos. Esta acción no se puede deshacer.'
+        : `¿Eliminar las ${state.cuadras.length} cuadras del sitio? Se perderán todos sus datos. Esta acción no se puede deshacer.`;
+    if (window.confirm(message)) {
+      setState((prev) => clearAllCuadras(prev));
+    }
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -168,6 +181,14 @@ function App() {
           >
             Descargar todo en Excel
           </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={handleClearAll}
+            disabled={state.cuadras.length === 0}
+          >
+            Limpiar todo
+          </button>
           <span className={`save-status${saveStatus === 'error' ? ' error' : ''}`} role="status" aria-live="polite">
             {saveLabel}
           </span>
@@ -227,6 +248,7 @@ function App() {
                   setState((prev) => setCellValue(prev, cuadraId, cajonId, recorridoId, value))
                 }
                 onRenameCuadra={(cuadraId, name) => setState((prev) => renameCuadra(prev, cuadraId, name))}
+                onRemoveCuadra={(cuadraId) => setState((prev) => removeCuadra(prev, cuadraId))}
               />
             ))}
           </div>

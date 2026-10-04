@@ -67,7 +67,22 @@ describe('calculateCuadraResult edge cases', () => {
     expect(result.duracionMinutos).toBeNull();
   });
 
-  it('counts a vehicle only once per cuadra even if seen in multiple recorridos', () => {
+  it('counts a vehicle that continues in the SAME cajón on the next recorrido only once', () => {
+    const cuadra = buildCuadra('c1', 1, 2);
+    const [slot] = cuadra.cajones;
+    const [rep1, rep2] = cuadra.recorridos;
+    const observations = {
+      [getCellKey('c1', slot.id, rep1.id)]: '5',
+      [getCellKey('c1', slot.id, rep2.id)]: '5',
+    };
+    const result = calculateCuadraResult(cuadra, 1, observations);
+    expect(result.demanda).toBe(1);
+  });
+
+  it('counts the same plate in two DIFFERENT cajones as two separate occupations (not deduplicated)', () => {
+    // Real parking studies do see the same short plate code in two cajones
+    // at once — that's two real occupied spaces, not one vehicle in two
+    // places, so demanda must not merge across cajones, only within one.
     const cuadra = buildCuadra('c1', 2, 2);
     const [slotA, slotB] = cuadra.cajones;
     const [rep1, rep2] = cuadra.recorridos;
@@ -76,7 +91,19 @@ describe('calculateCuadraResult edge cases', () => {
       [getCellKey('c1', slotB.id, rep2.id)]: '5',
     };
     const result = calculateCuadraResult(cuadra, 1, observations);
-    expect(result.demanda).toBe(1);
+    expect(result.demanda).toBe(2);
+  });
+
+  it('a vehicle that leaves and returns to the same cajón (non-adjacent) counts as two occupations', () => {
+    const cuadra = buildCuadra('c1', 1, 3);
+    const [slot] = cuadra.cajones;
+    const [rep1, , rep3] = cuadra.recorridos; // recorrido 2 left vacío (vehicle left and came back)
+    const observations = {
+      [getCellKey('c1', slot.id, rep1.id)]: '5',
+      [getCellKey('c1', slot.id, rep3.id)]: '5',
+    };
+    const result = calculateCuadraResult(cuadra, 1, observations);
+    expect(result.demanda).toBe(2);
   });
 
   it('a missing cell behaves exactly like an explicit 0 (no pending state)', () => {
